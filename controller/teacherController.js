@@ -11,7 +11,7 @@ exports.signUp = async function signUp (req,res) {
     const password = req.body.password;
     password2 = await bcrypt.hash(password, salt);
     const value = [
-        [ req.body.id,req.body.name,req.body.address,req.body.email,req.body.phone,password2]
+        [ req.body.id,req.body.name,req.body.gender,req.body.address,req.body.email,req.body.phone,password2]
     ]
     connection.query('SELECT * FROM teacher WHERE id = ?',req.body.id, async (error,results) => {
         if (error) throw error;
@@ -21,7 +21,7 @@ exports.signUp = async function signUp (req,res) {
             let checkEmail = results.map(result => Object.values(result));
             if(ArrayData[0]==null){
                 if(checkEmail[0]==null){
-                    connection.query('INSERT INTO teacher (id,name,address,email,phone,password) VALUES ?',[value]);
+                    connection.query('INSERT INTO teacher (id,name,gender,address,email,phone,password) VALUES ?',[value]);
                     res.send("Add successfully!");
                 }
                 else{
@@ -37,7 +37,7 @@ exports.signUp = async function signUp (req,res) {
 exports.update = async function update (req,res) {
     connection.query('SELECT * FROM teacher WHERE id = ?',[req.body.new_id], async (error,results)=>{
         if(error) throw error;
-        console.log(results[0])
+        // console.log(results[0])
         if(results[0]==!'undefined'){
             res.json({
                 message: "The Id already exist! Please input new ID!" 
@@ -98,7 +98,7 @@ exports.seeDetail = async function seeDetail (req,res) {
             teacher.FromYear[i] = results[i].FromYear;
             teacher.year[i] = results[i].year
         }
-        console.log(teacher);
+        // console.log(teacher);
         res.send(teacher)
     })
 }

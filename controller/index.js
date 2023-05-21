@@ -8,13 +8,13 @@ const course = require("./course");
 const assignment = require("./assignment");
 
 
-route.post('/login',user.authenticate,user.isAdmin, user.login);
+route.post('/login', user.login);
 route.post('/logout',user.authenticate,user.isAdmin, user.logout);
 route.post('/admin/signUp/student', user.authenticate,user.isAdmin, student.signUp);
 route.post('/admin/student/update',user.authenticate, user.isAdmin,student.update);
 route.post('/admin/student/updateClass',user.authenticate,user.isAdmin, student.updateClass);
 route.get('/admin/student/displayAll',user.authenticate, user.isAdmin,student.displayAll);
-route.get('/admin/student/searchByCatagory',user.authenticate,user.isAdmin, student.searchByCatagory);
+route.get('/admin/student/searchByYearGroup',user.authenticate,user.isAdmin, student.searchByYearGroup);
 route.get('/admin/student/searchOneStudent/:search',user.authenticate,user.isAdmin, student.searchOneStudent);
 route.put('/admin/student/delete/:id',user.authenticate,user.isAdmin, student._delete);
 route.post('/admin/teacher/signUp',user.authenticate,user.isAdmin, teacher.signUp);

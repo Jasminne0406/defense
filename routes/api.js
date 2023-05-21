@@ -6,10 +6,12 @@ const controller = require("../controller/index.js");
 const teacherController = require("../teacherController/index.js");
 const studentController = require("../studentController/index.js");
 const cookieParser = require('cookie-parser');
-// router.use(cors({
-//     origin: "http://localhost:8080",
-//     credentials: true
-// }));
+const cors = require('cors');
+
+router.use(cors({
+    origin: "http://localhost:3001",
+    credentials: true
+}));
 
 router.use(cookieParser());
 router.use(teacherController);

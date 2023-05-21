@@ -25,7 +25,7 @@ exports.login = async function login (req,res) {
     const   email = req.body.email;
     const  password = req.body.password;
     const   admin = {
-        email : "admin",
+        email : "admin@123",
         password : "admin"
     }
     if(!req.body.email){
@@ -47,80 +47,82 @@ exports.login = async function login (req,res) {
                     message: "Admin login successfully!"
         })
     }
-    con.query('SELECT * FROM student WHERE email = ?',email, async (error,results) => {
-        if (error) throw error;
-        const ArrayData = results.map(result => Object.values(result));
-        if(ArrayData[0]==null){
-            con.query('SELECT * FROM teacher WHERE email = ?',email, async (error,results) => {
-                if (error) throw error;
-                const ArrayData2 = results.map(result => Object.values(result));
-                if(ArrayData2[0]==null){
-                    res.json({
-                        message:"Incorrect Gmail or Password!!!"
-                    })
-                }else{
-                    // console.log(ArrayData2)
-                    const isValidPassword = await bcrypt.compare(password,ArrayData2[0][5]);
-                    if (isValidPassword){
-                        const user = {
-                            id:null,
-                            email:null,
-                            password:null,
-                            role: 'teacher',
+    else{
+        con.query('SELECT * FROM student WHERE email = ?',email, async (error,results) => {
+            if (error) throw error;
+            const ArrayData = results.map(result => Object.values(result));
+            if(ArrayData[0]==null){
+                con.query('SELECT * FROM teacher WHERE email = ?',email, async (error,results) => {
+                    if (error) throw error;
+                    const ArrayData2 = results.map(result => Object.values(result));
+                    if(ArrayData2[0]==null){
+                        res.json({
+                            message:"Incorrect Gmail or Password!!!"
+                        })
+                    }else{
+                        // console.log(ArrayData2)
+                        const isValidPassword = await bcrypt.compare(password,ArrayData2[0][5]);
+                        if (isValidPassword){
+                            const user = {
+                                id:null,
+                                email:null,
+                                password:null,
+                                role: 'teacher',
+                            }
+                            user.id = ArrayData2[0][0];
+                            user.email = ArrayData2[0][3];
+                            user.password = ArrayData2[0][5];
+                            const token = jwt.sign(user,config.authentication.jwtSecret);
+                            // console.log(token)
+                            res
+                                .cookie("access_token",token,{
+                                    maxAge:90000000,
+                                    httpOnly:true,
+                                    secure: process.env.NODE_ENV === "production",
+                                })
+                                .status(200)
+                                .json({
+                                    message: "login successfully 😊 👌",
+                                    role: "teacher"
+                                })
                         }
-                        user.id = ArrayData2[0][0];
-                        user.email = ArrayData2[0][3];
-                        user.password = ArrayData2[0][5];
-                        const token = jwt.sign(user,config.authentication.jwtSecret);
-                        console.log(token)
-                        res
-                            .cookie("access_token",token,{
-                                maxAge:90000000,
-                                httpOnly:true,
-                                secure: process.env.NODE_ENV === "production",
-                            })
-                            .status(200)
-                            .json({
-                                message: "login successfully 😊 👌",
-                                user: user,
-                            })
                     }
-                }
-             })
-        }
-        else{
-            const isValidPassword = await bcrypt.compare(password,ArrayData[0][5]);
-            if (isValidPassword){
-                const user = {
-                    id:null,
-                    email:null,
-                    password:null,
-                    role: 'student'
-                }
-                user.id = ArrayData[0][0];
-                user.email = ArrayData[0][3];
-                user.password = ArrayData[0][5];
-                const token = jwt.sign(user,config.authentication.jwtSecret);
-                console.log(ArrayData[0])
-                res
-                    .cookie("access_token",token,{
-                        maxAge:90000000,
-                        httpOnly:true,
-                        secure: process.env.NODE_ENV === "production",
-                    })
-                    .status(200)
-                    .json({
-                        message: "login successfully 😊 👌",
-                        user: user,
-                    })
+                 })
             }
             else{
-                res.json({
-                    message:"Incorrect Gmail or Password!!!"
-                })
+                const isValidPassword = await bcrypt.compare(password,ArrayData[0][6]);
+                if (isValidPassword){
+                    const user = {
+                        id:null,
+                        email:null,
+                        password:null,
+                        role: 'student'
+                    }
+                    user.id = ArrayData[0][0];
+                    user.email = ArrayData[0][3];
+                    user.password = ArrayData[0][5];
+                    const token = jwt.sign(user,config.authentication.jwtSecret);
+                    console.log(ArrayData[0])
+                    res
+                        .cookie("access_token",token,{
+                            maxAge:90000000,
+                            httpOnly:true,
+                            secure: process.env.NODE_ENV === "production",
+                        })
+                        .status(200)
+                        .json({
+                            message: "login successfully 😊 👌",
+                            role: "student"
+                        })
+                }
+                else{
+                    res.status(404).json({
+                        message:"Incorrect Gmail or Password hhhhhh!!!"
+                    })
+                }
             }
-        }
-    })
+        })
+    }
 }
 
 exports.authenticate = async function authenticate (req,res,next) {
@@ -137,7 +139,7 @@ exports.authenticate = async function authenticate (req,res,next) {
 
 exports.isAdmin = async function isAdmin (req,res,next) {
     const   admin = {
-        email : "admin",
+        email : "admin@123",
         password : "admin"
     }
     const token = req.cookies.access_token;
@@ -150,3 +152,119 @@ exports.isAdmin = async function isAdmin (req,res,next) {
                 .json({message: "Can't Access!!!"})
     }
 }
+
+// exports.login = async function login(req, res) {
+//     const email = req.body.email;
+//     const password = req.body.password;
+//     const admin = {
+//       email: "admin@123",
+//       password: "admin",
+//     };
+//     if (!req.body.email) {
+//       res.status(404);
+//       res.error("You need to input your email");
+//     } else if (!req.body.password) {
+//       res.status(404);
+//       res.error("You need to input your password");
+//     }
+//     if (req.body.email === admin.email && req.body.password === admin.password) {
+//       const token = jwt.sign(admin, config.authentication.jwtSecret);
+//       res
+//         .status(200)
+//         .cookie("access_token", token, {
+//           maxAge: 90000000,
+//           httpOnly: true,
+//           secure: process.env.NODE_ENV === "production",
+//         })
+//         .json({
+//           message: "Admin login successfully!",
+//         });
+//     } else {
+//       con.query(
+//         "SELECT * FROM student WHERE email = ?",
+//         email,
+//         async (error, results) => {
+//           if (error) throw error;
+//           const ArrayData = results.map((result) => Object.values(result));
+//           if (ArrayData[0] == null) {
+//             con.query(
+//               "SELECT * FROM teacher WHERE email = ?",
+//               email,
+//               async (error, results) => {
+//                 if (error) throw error;
+//                 const ArrayData2 = results.map((result) => Object.values(result));
+//                 if (ArrayData2[0] == null) {
+//                   res.json({
+//                     message: "Incorrect Gmail or Password!!!",
+//                   });
+//                 } else {
+//                   // console.log(ArrayData2)
+//                   const isValidPassword = await bcrypt.compare(
+//                     password,
+//                     ArrayData2[0][5]
+//                   );
+//                   if (isValidPassword) {
+//                     const user = {
+//                       id: null,
+//                       email: null,
+//                       password: null,
+//                       role: "teacher",
+//                     };
+//                     user.id = ArrayData2[0][0];
+//                     user.email = ArrayData2[0][3];
+//                     user.password = ArrayData2[0][5];
+//                     const token = jwt.sign(user, config.authentication.jwtSecret);
+//                     console.log(token);
+//                     res
+//                       .cookie("access_token", token, {
+//                         maxAge: 90000000,
+//                         httpOnly: true,
+//                         secure: process.env.NODE_ENV === "production",
+//                       })
+//                       .status(200)
+//                       .json({
+//                         message: "login successfully 😊 👌",
+//                         role: "teacher",
+//                       });
+//                   }
+//                 }
+//               }
+//             );
+//           } else {
+//             const isValidPassword = await bcrypt.compare(
+//               password,
+//               ArrayData[0][5]
+//             );
+//             if (isValidPassword) {
+//               const user = {
+//                 id: null,
+//                 email: null,
+//                 password: null,
+//                 role: "student",
+//               };
+//               user.id = ArrayData[0][0];
+//               user.email = ArrayData[0][3];
+//               user.password = ArrayData[0][5];
+//               const token = jwt.sign(user, config.authentication.jwtSecret);
+//               console.log(ArrayData[0]);
+//               res
+//                 .cookie("access_token", token, {
+//                   maxAge: 90000000,
+//                   httpOnly: true,
+//                   secure: process.env.NODE_ENV === "production",
+//                 })
+//                 .status(200)
+//                 .json({
+//                   message: "login successfully 😊 👌",
+//                   role: "student",
+//                 });
+//             } else {
+//               res.json({
+//                 message: "Incorrect Gmail or Password!!!",
+//               });
+//             }
+//           }
+//         }
+//       );
+//     }
+//   };

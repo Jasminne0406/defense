@@ -9,13 +9,14 @@ const connection = mysql.createConnection({
 
 exports.create = async function create(req,res){ 
     const value = [
-        [req.body.name,req.body.start,req.body.end,req.body.date,req.body.group,req.body.course_id]
+        [req.body.name,req.body.start,req.body.end,req.body.date,req.body.group,req.body.course_id,req.body.desc]
     ]
-    connection.query('INSERT INTO _sessions (_name,_start,_end,_date,_group,course_id) VALUES ?',[value])
+    console.log(req.body.course_id)
+    connection.query('INSERT INTO _sessions (_name,_start,_end,_date,_group,course_id,description) VALUES ?',[value])
     connection.query('SELECT year_id FROM course WHERE course_id = ?',[req.body.course_id], async (error,results) => {  
             if (error) throw error;
             let year_id = results[0].year_id;
-            console.log(year_id)
+            // console.log(year_id)
             if (req.body.group==='all' || req.body.group===null){
                 connection.query('SELECT id FROM _sessions WHERE _name = ? AND _start = ? AND _end = ? AND _date = ? AND _group = ? AND course_id = ?',
                     [req.body.name,req.body.start,req.body.end,req.body.date,req.body.group,req.body.course_id], 
@@ -58,9 +59,21 @@ exports.attendance = async function attendance (req,res) {
       })
     }
 
+exports.displayByGroup = async function displayByGroup (req,res) {
+    connection.query('SELECT * FROM _sessions s JOIN course c ON s.course_id = c.course_id JOIN teacher t ON c.teacher_id = t.id WHERE c.course_id = ? AND s._group = ?',[req.body.course_id,req.body.group],(error,results) => {
+        // console.log(results)
+        res 
+            .status(200)
+            .json({
+                results: results
+            })
+    })
+}
+
 exports.displayAll = async function displayAll (req,res) {
-    connection.query('SELECT * FROM _sessions WHERE course_id = ?',[req.body.course_id],(error,results) => {
-        res
+    connection.query('SELECT * FROM _sessions s JOIN course c ON s.course_id = c.course_id JOIN teacher t ON c.teacher_id = t.id WHERE c.course_id = ?',[req.body.course_id],(error,results) => {
+        // console.log(results)
+        res 
             .status(200)
             .json({
                 results: results

@@ -10,31 +10,25 @@ const config = require('../routes/config')
 const jwt = require('jsonwebtoken')
 //Teacher create assigments
 exports.create = async function create (req,res) {
-    connection.query('SELECT * FROM course WHERE course_name = ?',req.body.course_name, async (error,results) => {
-        let course_id = results[0].course_id;
-        if (error) throw error;
-        const ArrayData = results.map(result => Object.values(result));
-        if(ArrayData[0]==null){
-            res.send("Cannot find the course name!!!");
-        }else{
+            var fileBuffer = Buffer.from(req.body.file, 'base64')
             const value = [
-                [req.body.title,req.body.desc,results[0].course_id,req.body.assignOn,req.body.dateline,req.body.group,req.body.score,req.body.file]
+                [req.body.title,req.body.desc,req.body.course_id,req.body.assignOn,req.body.dateline,req.body.dueTime,req.body.group,req.body.score,fileBuffer]
             ]
-            connection.query('INSERT INTO assignments (_title,_desc,_course_id,_assignOn,_dateline,_group,_score,_file) VALUES ?',[value])
-            connection.query('SELECT _id FROM assignments WHERE _file = ?',[req.body.file], async (error,results) => {
+            connection.query('INSERT INTO assignments (_title,_desc,_course_id,_assignOn,_dateline,_dueTime,_group,_score,_file) VALUES ?',[value])
+            connection.query('SELECT _id FROM assignments WHERE _file = ?',[fileBuffer], async (error,results) => {
                 let assigment_id = results[0]._id;
-                connection.query('SELECT year_id FROM course WHERE course_id = ?',[course_id], async (error,results) => {
+                connection.query('SELECT year_id FROM course WHERE course_id = ?',[req.body.course_id], async (error,results) => {
                     if (error) throw error;
                     let year_id = results[0].year_id;
-                    console.log(year_id)
-                    console.log(assigment_id)
+                    // console.log(year_id)
+                    // console.log(assigment_id)
                     if (req.body.group==='all' || req.body.group===null){
                         connection.query('SELECT student_id FROM student_yg syg JOIN yg ON syg.yg_id = yg.yg_id WHERE yg.year_id = ?',[year_id], async (error,results) => {
                             for(i=0; i<results.length ; i++){
                                 let value = [
-                                    [results[i].student_id,assigment_id,'N/A',0,req.body.file,'N/A']
+                                    [results[i].student_id,assigment_id,'N/A','N/A',0,fileBuffer,'N/A']
                                 ]
-                                connection.query('INSERT INTO submission (student_id,assignment_id,_submitDate,_score,_file,_submitFile) VALUES ? ',[value])
+                                connection.query('INSERT INTO submission (student_id,assignment_id,_submitDate,_submitTime,_score,_file,_submitFile) VALUES ? ',[value])
                             }
                         })
                     }else{
@@ -55,8 +49,6 @@ exports.create = async function create (req,res) {
                     message : "Assignment creates successfully!!!"
                  })
         }
-    });
-}
 
 // Teacher score assignments
 exports.score = async function score (req,res) {
@@ -142,11 +134,34 @@ exports._delete = async function _delete (req,res) {
     }
 
 exports.view = async function view (req,res) {
-    connection.query("SELECT * FROM assignments WHERE course_id = ?",[req.body.course_id],(error,results)=>{
+    connection.query("SELECT * FROM assignments WHERE _course_id = ?",[req.body.course_id],(error,results)=>{
+    // console.log(results)
     res
         .status(200)
         .json({
-            result: results
+            results: results
+        })
+    })
+}
+
+exports.viewDetail = async function viewDetail (req,res) {
+    connection.query("SELECT * FROM assignments WHERE _course_id = ? AND _id = ?",[req.body.course_id,req.body.assigment_id],(error,results)=>{
+    // console.log(results)
+    res
+        .status(200)
+        .json({
+            results: results
+        })
+    })
+}
+
+exports.viewByGroup = async function view (req,res) {
+    connection.query("SELECT * FROM assignments WHERE _course_id = ? AND _group = ?",[req.body.course_id,req.body.group],(error,results)=>{
+    // console.log(results)
+    res
+        .status(200)
+        .json({
+            results: results
         })
     })
 }
@@ -156,7 +171,7 @@ exports.viewAll = async function viewAll (req,res) {
         res
             .status(200)
             .json({
-                result: results
+                results: results
             })
         })
 }
